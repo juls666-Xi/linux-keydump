@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhotoTaker UI - my.app.Library</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Animations */
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .animate-pulse-ring { animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        @keyframes flash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        .animate-flash { animation: flash 0.3s ease-in-out; }
+
+        @keyframes slide-up {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up { animation: slide-up 0.4s ease-out forwards; }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-dot {
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* Grid pattern background */
+        .bg-grid {
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-white tracking-tight">PhotoTaker</h1>
+                    <p class="text-xs text-slate-400 mono">my.app.Library</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-800 rounded-full border border-slate-700">
+                    <div id="connectionStatus" class="w-2 h-2 rounded-full bg-emerald-500 status-dot"></div>
+                    <span class="text-xs font-medium text-slate-300">Client Connected</span>
+                </div>
+                <button onclick="toggleTheme()" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 space-y-6">
+
+        <!-- Main Control Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Camera Preview & Controls -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Preview Window -->
+                <div class="glass-panel rounded-2xl p-1 overflow-hidden relative group">
+                    <div class="aspect-video bg-slate-900 rounded-xl relative overflow-hidden bg-grid" id="previewContainer">
+                        <!-- Simulated Camera Preview -->
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center space-y-4" id="cameraOffState">
+                                <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto ring-4 ring-slate-700/50">
+                                    <svg class="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-slate-500 text-sm">Camera Standby</p>
+                            </div>
+                            
+                            <!-- Active Preview Simulation -->
+                            <div id="cameraActiveState" class="hidden absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800">
+                                <div class="absolute inset-0 bg-grid opacity-30"></div>
+                                <div class="absolute top-4 left-4 flex items-center gap-2">
+                                    <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                                    <span class="text-xs font-mono text-red-400">LIVE</span>
+                                </div>
+                                <div class="absolute bottom-4 right-4 text-xs font-mono text-slate-500">
+                                    PREVIEW • SurfaceHolder
+                                </div>
+                                <!-- Focus brackets -->
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div class="w-48 h-48 border border-white/20 rounded-lg relative">
+                                        <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white/60"></div>
+                                        <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-white/60"></div>
+                                        <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-white/60"></div>
+                                        <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white/60"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Flash Overlay -->
+                            <div id="flashOverlay" class="hidden absolute inset-0 bg-white z-20 pointer-events-none"></div>
+                            
+                            <!-- Captured Image Preview -->
+                            <div id="capturedPreview" class="hidden absolute inset-0 bg-slate-900 flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                    </div>
+                                    <p class="text-sm text-slate-300 font-medium">Image Captured</p>
+                                    <p class="text-xs text-slate-500 mt-1 mono" id="captureSize">0 bytes</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Channel Badge -->
+                        <div class="absolute top-4 right-4 px-3 py-1 bg-slate-900/80 backdrop-blur rounded-lg border border-slate-700">
+                            <span class="text-xs font-mono text-slate-400">Channel: <span class="text-indigo-400 font-bold" id="channelDisplay">0</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Control Bar -->
+                    <div class="p-4 flex items-center justify-between bg-slate-900/50 border-t border-slate-800">
+                        <div class="flex items-center gap-3">
+                            <button onclick="toggleCamera()" id="powerBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition-all border border-slate-700 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                <span>Initialize</span>
+                            </button>
+                            <button onclick="takePhoto()" id="shutterBtn" disabled class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-lg text-sm font-bold transition-all shadow-lg shadow-indigo-500/25 disabled:shadow-none flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="3" stroke-width="2"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                </svg>
+                                CAPTURE
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500 mr-2">Channel:</span>
+                            <input type="number" id="channelInput" value="0" min="0" max="99" 
+                                class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm text-center text-slate-300 focus:outline-none focus:border-indigo-500 mono"
+                                onchange="updateChannel(this.value)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Flow Visualization -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                        Data Transmission Flow
+                    </h3>
+                    <div class="relative">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex flex-col items-center gap-2 w-1/4">
+                                <div class="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700">
+                                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-xs text-slate-500">Camera</span>
+                            </div>
+                            
+                            <div class="flex-1 px-4 relative h-12 flex items-center">
+                                <div class="w-full h-0.5 bg-slate-800 relative overflow-hidden">
+                                    <div id="dataFlowLine" class="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent -translate-x-full transition-transform"></div>
+                                </div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span id="transferStatus" class="text-xs font-mono text-slate-600 bg-slate-900 px-2">Idle</span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-center gap-2 w-1/4">
+                                <div class="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700">
+                                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-xs text-slate-500">ClientListener</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar: Logs & Status -->
+            <div class="space-y-6">
+                <!-- System Status Card -->
+                <div class="glass-panel rounded-2xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-300 mb-4">System Status</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <div id="cameraStatusDot" class="w-2 h-2 rounded-full bg-slate-600"></div>
+                                <span class="text-sm text-slate-400">Camera API</span>
+                            </div>
+                            <span id="cameraStatusText" class="text-xs font-mono text-slate-500">Closed</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <div id="previewStatusDot" class="w-2 h-2 rounded-full bg-slate-600"></div>
+                                <span class="text-sm text-slate-400">Preview</span>
+                            </div>
+                            <span id="previewStatusText" class="text-xs font-mono text-slate-500">Inactive</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <div id="packageStatusDot" class="w-2 h-2 rounded-full bg-emerald-500 status-dot"></div>
+                                <span class="text-sm text-slate-400">Package</span>
+                            </div>
+                            <span class="text-xs font-mono text-emerald-500">Available</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Log Console -->
+                <div class="glass-panel rounded-2xl p-5 flex flex-col h-[400px]">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Logcat Output
+                        </h3>
+                        <button onclick="clearLogs()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">Clear</button>
+                    </div>
+                    <div id="logConsole" class="flex-1 bg-slate-950 rounded-lg p-3 overflow-y-auto font-mono text-xs space-y-1 border border-slate-800">
+                        <div class="text-slate-600 italic">// Waiting for camera operations...</div>
+                    </div>
+                </div>
+
+                <!-- Class Info -->
+                <div class="glass-panel rounded-2xl p-5">
+                    <h3 class="text-sm font-semibold text-slate-300 mb-3">Class Details</h3>
+                    <div class="space-y-2 text-xs mono">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Package</span>
+                            <span class="text-indigo-400">my.app.Library</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Extends</span>
+                            <span class="text-slate-300">Object</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">API Level</span>
+                            <span class="text-amber-400">Legacy (Camera 1)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Callback</span>
+                            <span class="text-slate-300">PictureCallback</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Source Code Explorer -->
+        <div class="glass-panel rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                    </svg>
+                    Source Code
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="showCode('java')" class="px-3 py-1 text-xs rounded bg-indigo-600 text-white">Java</button>
+                    <button onclick="showCode('kotlin')" class="px-3 py-1 text-xs rounded bg-slate-800 text-slate-400 hover:text-white transition-colors">Kotlin</button>
+                </div>
+            </div>
+            <div class="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+                <div class="flex items-center px-4 py-2 bg-slate-900 border-b border-slate-800 gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                    <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                    <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                    <span class="ml-2 text-xs text-slate-500 mono">PhotoTaker.java</span>
+                </div>
+                <pre class="p-4 overflow-x-auto text-sm"><code class="language-java" id="codeBlock">public class PhotoTaker {
+    Camera cam;
+    ClientListener ctx;
+    int chan;
+    SurfaceHolder holder;
+
+    private PictureCallback pic = new PictureCallback() {
+        public void onPictureTaken(byte[] data, Camera camera) {
+            ctx.handleData(chan, data);
+            Log.i("PhotoTaker", "After take picture !");
+            cam.release();
+            cam = null;
+        }
+    };
+
+    public boolean takePhoto() {
+        if(!(ctx.getApplicationContext().getPackageManager()
+            .hasSystemFeature(PackageManager.FEATURE_CAMERA)))
+            return false;
+            
+        try {
+            cam = Camera.open();
+        } catch (Exception e) { return false; }
+        
+        if (cam == null) return false;
+        
+        SurfaceView view = new SurfaceView(ctx);
+        try {
+            holder = view.getHolder();
+            cam.setPreviewDisplay(holder);
+        } catch(IOException e) { return false; }
+        
+        cam.startPreview();
+        cam.takePicture(null, null, pic);
+        return true;
+    }
+}</code></pre>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let isCameraOpen = false;
+        let currentChannel = 0;
+        let logId = 0;
+
+        function log(level, tag, message) {
+            const console = document.getElementById('logConsole');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const colors = {
+                'I': 'text-emerald-400',
+                'D': 'text-blue-400',
+                'E': 'text-red-400',
+                'W': 'text-amber-400'
+            };
+            
+            const entry = document.createElement('div');
+            entry.className = `animate-slide-up flex gap-2 ${colors[level] || 'text-slate-400'}`;
+            entry.innerHTML = `
+                <span class="text-slate-600 shrink-0">[${time}]</span>
+                <span class="font-bold shrink-0">${level}/${tag}:</span>
+                <span class="text-slate-300">${message}</span>
+            `;
+            
+            console.appendChild(entry);
+            console.scrollTop = console.scrollHeight;
+            
+            // Keep only last 50 logs
+            while (console.children.length > 50) {
+                console.removeChild(console.firstChild);
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logConsole').innerHTML = '<div class="text-slate-600 italic">// Logs cleared</div>';
+        }
+
+        function updateChannel(val) {
+            currentChannel = parseInt(val) || 0;
+            document.getElementById('channelDisplay').textContent = currentChannel;
+            log('D', 'PhotoTaker', `Channel set to ${currentChannel}`);
+        }
+
+        function toggleCamera() {
+            const btn = document.getElementById('powerBtn');
+            const shutter = document.getElementById('shutterBtn');
+            const offState = document.getElementById('cameraOffState');
+            const activeState = document.getElementById('cameraActiveState');
+            
+            if (!isCameraOpen) {
+                // Initialize
+                log('I', 'PhotoTaker', 'Just before Open !');
+                
+                setTimeout(() => {
+                    isCameraOpen = true;
+                    offState.classList.add('hidden');
+                    activeState.classList.remove('hidden');
+                    
+                    btn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        <span>Release</span>
+                    `;
+                    btn.classList.add('bg-red-900/30', 'text-red-400', 'border-red-800');
+                    btn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
+                    
+                    shutter.disabled = false;
+                    
+                    document.getElementById('cameraStatusDot').className = 'w-2 h-2 rounded-full bg-emerald-500 status-dot';
+                    document.getElementById('cameraStatusText').textContent = 'Open';
+                    document.getElementById('cameraStatusText').className = 'text-xs font-mono text-emerald-500';
+                    
+                    document.getElementById('previewStatusDot').className = 'w-2 h-2 rounded-full bg-emerald-500 status-dot';
+                    document.getElementById('previewStatusText').textContent = 'Active';
+                    document.getElementById('previewStatusText').className = 'text-xs font-mono text-emerald-500';
+                    
+                    log('I', 'PhotoTaker', 'Right after Open !');
+                    log('D', 'PhotoTaker', 'Camera.startPreview() called');
+                }, 600);
+            } else {
+                // Release
+                releaseCamera();
+            }
+        }
+
+        function releaseCamera() {
+            const btn = document.getElementById('powerBtn');
+            const shutter = document.getElementById('shutterBtn');
+            const offState = document.getElementById('cameraOffState');
+            const activeState = document.getElementById('cameraActiveState');
+            const captured = document.getElementById('capturedPreview');
+            
+            isCameraOpen = false;
+            offState.classList.remove('hidden');
+            activeState.classList.add('hidden');
+            captured.classList.add('hidden');
+            
+            btn.innerHTML = `
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span>Initialize</span>
+            `;
+            btn.classList.remove('bg-red-900/30', 'text-red-400', 'border-red-800');
+            btn.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+            
+            shutter.disabled = true;
+            
+            document.getElementById('cameraStatusDot').className = 'w-2 h-2 rounded-full bg-slate-600';
+            document.getElementById('cameraStatusText').textContent = 'Closed';
+            document.getElementById('cameraStatusText').className = 'text-xs font-mono text-slate-500';
+            
+            document.getElementById('previewStatusDot').className = 'w-2 h-2 rounded-full bg-slate-600';
+            document.getElementById('previewStatusText').textContent = 'Inactive';
+            document.getElementById('previewStatusText').className = 'text-xs font-mono text-slate-500';
+            
+            log('I', 'PhotoTaker', 'Camera released');
+        }
+
+        function takePhoto() {
+            if (!isCameraOpen) return;
+            
+            const shutter = document.getElementById('shutterBtn');
+            const flash = document.getElementById('flashOverlay');
+            const flowLine = document.getElementById('dataFlowLine');
+            const transferStatus = document.getElementById('transferStatus');
+            const captured = document.getElementById('capturedPreview');
+            
+            // Flash effect
+            flash.classList.remove('hidden');
+            flash.classList.add('animate-flash');
+            setTimeout(() => {
+                flash.classList.remove('animate-flash');
+                flash.classList.add('hidden');
+            }, 300);
+            
+            shutter.disabled = true;
+            log('I', 'PhotoTaker', 'takePicture() invoked');
+            
+            // Simulate capture delay
+            setTimeout(() => {
+                log('I', 'PhotoTaker', 'After take picture !');
+                
+                // Show data transfer
+                transferStatus.textContent = 'Transmitting...';
+                transferStatus.className = 'text-xs font-mono text-indigo-400 bg-slate-900 px-2';
+                flowLine.style.transition = 'transform 1s linear';
+                flowLine.style.transform = 'translateX(300%)';
+                
+                setTimeout(() => {
+                    // Data sent
+                    transferStatus.textContent = 'Sent';
+                    transferStatus.className = 'text-xs font-mono text-emerald-500 bg-slate-900 px-2';
+                    
+                    const size = Math.floor(Math.random() * 2000000) + 500000;
+                    document.getElementById('captureSize').textContent = `${size.toLocaleString()} bytes`;
+                    
+                    log('D', 'ClientListener', `handleData(chan=${currentChannel}, data[${size}])`);
+                    
+                    // Show captured preview
+                    document.getElementById('cameraActiveState').classList.add('hidden');
+                    captured.classList.remove('hidden');
+                    
+                    // Reset flow line
+                    setTimeout(() => {
+                        flowLine.style.transition = 'none';
+                        flowLine.style.transform = 'translateX(-100%)';
+                        transferStatus.textContent = 'Idle';
+                        transferStatus.className = 'text-xs font-mono text-slate-600 bg-slate-900 px-2';
+                        
+                        // Auto release after capture (as per original code behavior)
+                        setTimeout(() => {
+                            log('I', 'PhotoTaker', 'Auto-releasing camera...');
+                            releaseCamera();
+                        }, 1500);
+                        
+                    }, 1000);
+                    
+                }, 800);
+                
+            }, 400);
+        }
+
+        function showCode(lang) {
+            const block = document.getElementById('codeBlock');
+            if (lang === 'kotlin') {
+                block.textContent = `class PhotoTaker(private val ctx: ClientListener, private var chan: Int) {
+    private var cam: Camera? = null
+    private var holder: SurfaceHolder? = null
+
+    private val pic = Camera.PictureCallback { data, camera ->
+        ctx.handleData(chan, data)
+        Log.i("PhotoTaker", "After take picture !")
+        cam?.release()
+        cam = null
+    }
+
+    fun takePhoto(): Boolean {
+        if (!ctx.applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)) 
+            return false
+        
+        cam = try { Camera.open() } catch (e: Exception) { return false }
+            ?: return false
+
+        val view = SurfaceView(ctx)
+        holder = view.holder
+        try {
+            cam?.setPreviewDisplay(holder)
+        } catch (e: IOException) { return false }
+
+        cam?.startPreview()
+        cam?.takePicture(null, null, pic)
+        return true
+    }
+}`;
+                block.className = 'language-kotlin';
+            } else {
+                block.textContent = document.querySelector('code').textContent;
+                block.className = 'language-java';
+            }
+            hljs.highlightElement(block);
+        }
+
+        // Initialize syntax highlighting
+        hljs.highlightAll();
+        
+        // Initial log
+        setTimeout(() => {
+            log('I', 'System', 'PhotoTaker UI initialized');
+            log('D', 'PackageManager', 'FEATURE_CAMERA: true');
+        }, 500);
+    </script>
+</body>
+</html>
