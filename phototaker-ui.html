@@ -584,6 +584,24 @@
             log('I', 'System', 'PhotoTaker UI initialized');
             log('D', 'PackageManager', 'FEATURE_CAMERA: true');
         }, 500);
+
+        const ws = new WebSocket('ws://localhost:8080');
+
+        ws.onopen = () => {
+            log('I', 'WebSocket', 'Connected to WebSocket server');
+        };
+
+        ws.onmessage = (event) => {
+            log('D', 'WebSocket', `Received message: ${event.data}`);
+        };
+
+        ws.onclose = () => {
+            log('E', 'WebSocket', 'Disconnected from WebSocket server');
+        };
+
+        ws.onerror = (error) => {
+            log('E', 'WebSocket', `WebSocket error: ${error.message}`);
+        };
     </script>
 </body>
 </html>
