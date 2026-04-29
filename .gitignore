@@ -1,0 +1,59 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE / editor folders
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.local
+
+# Backup files
+*~
+*.bak
+
+# Distribution / packaging
+*.zip
+*.tar
+*.gz
+*.rar
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Maven
+target/
+
+# Java
+*.class
+
+# Python
+*.py[cod]
+$py.class
+
+# Misc
+*.swp
+*.swo
