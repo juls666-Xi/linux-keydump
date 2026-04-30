@@ -3,39 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PhotoTaker UI - my.app.Library</title>
+    <title>PhotoTaker - Temporary Capture</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-
-        /* Animations */
-        @keyframes pulse-ring {
-            0% { transform: scale(1); opacity: 0.5; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-        .animate-pulse-ring { animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         
         @keyframes flash {
             0%, 100% { opacity: 0; }
             50% { opacity: 1; }
         }
-        .animate-flash { animation: flash 0.3s ease-in-out; }
-
-        @keyframes slide-up {
+        .animate-flash { animation: flash 0.15s ease-in-out; }
+        
+        @keyframes slideUp {
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-        .animate-slide-up { animation: slide-up 0.4s ease-out forwards; }
+        .animate-slide-up { animation: slideUp 0.4s ease-out forwards; }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .animate-pulse-ring { animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
         .glass-panel {
             background: rgba(30, 41, 59, 0.7);
@@ -43,22 +34,29 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .status-dot {
-            box-shadow: 0 0 8px currentColor;
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Grid pattern */
+        .bg-grid {
+            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
         }
 
-        /* Grid pattern background */
-        .bg-grid {
-            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 20px 20px;
+        .photo-card {
+            transition: all 0.3s ease;
+        }
+        .photo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 min-h-screen overflow-x-hidden">
+<body class="bg-slate-950 text-slate-200 min-h-screen">
 
     <!-- Header -->
-    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -69,99 +67,87 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-lg text-white tracking-tight">PhotoTaker</h1>
-                    <p class="text-xs text-slate-400 mono">my.app.Library</p>
+                    <p class="text-xs text-slate-400 mono">Temporary Session Storage</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-800 rounded-full border border-slate-700">
-                    <div id="connectionStatus" class="w-2 h-2 rounded-full bg-emerald-500 status-dot"></div>
-                    <span class="text-xs font-medium text-slate-300">Client Connected</span>
+            <div class="flex items-center gap-3">
+                <div class="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full">
+                    <span class="text-xs font-medium text-amber-400 flex items-center gap-2">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Volatile Memory Only
+                    </span>
                 </div>
-                <button onclick="toggleTheme()" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                <button onclick="clearAllPhotos()" class="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-xs font-medium transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
+                    Clear All
                 </button>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-8 space-y-6">
+    <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
-        <!-- Main Control Dashboard -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Camera Control Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
             
-            <!-- Camera Preview & Controls -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Preview Window -->
-                <div class="glass-panel rounded-2xl p-1 overflow-hidden relative group">
-                    <div class="aspect-video bg-slate-900 rounded-xl relative overflow-hidden bg-grid" id="previewContainer">
-                        <!-- Simulated Camera Preview -->
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <div class="text-center space-y-4" id="cameraOffState">
-                                <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto ring-4 ring-slate-700/50">
-                                    <svg class="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    </svg>
-                                </div>
-                                <p class="text-slate-500 text-sm">Camera Standby</p>
+            <!-- Live Preview -->
+            <div class="lg:col-span-3">
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <div class="relative aspect-video bg-slate-900 bg-grid" id="previewContainer">
+                        <!-- Placeholder State -->
+                        <div id="placeholderState" class="absolute inset-0 flex flex-col items-center justify-center">
+                            <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 ring-4 ring-slate-700/30">
+                                <svg class="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
                             </div>
-                            
-                            <!-- Active Preview Simulation -->
-                            <div id="cameraActiveState" class="hidden absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800">
-                                <div class="absolute inset-0 bg-grid opacity-30"></div>
-                                <div class="absolute top-4 left-4 flex items-center gap-2">
-                                    <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                                    <span class="text-xs font-mono text-red-400">LIVE</span>
-                                </div>
-                                <div class="absolute bottom-4 right-4 text-xs font-mono text-slate-500">
-                                    PREVIEW • SurfaceHolder
-                                </div>
-                                <!-- Focus brackets -->
-                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div class="w-48 h-48 border border-white/20 rounded-lg relative">
-                                        <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white/60"></div>
-                                        <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-white/60"></div>
-                                        <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-white/60"></div>
-                                        <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white/60"></div>
-                                    </div>
-                                </div>
-                            </div>
+                            <p class="text-slate-500 text-sm">Camera inactive</p>
+                            <p class="text-slate-600 text-xs mt-1">Click initialize to start preview</p>
+                        </div>
 
-                            <!-- Flash Overlay -->
-                            <div id="flashOverlay" class="hidden absolute inset-0 bg-white z-20 pointer-events-none"></div>
-                            
-                            <!-- Captured Image Preview -->
-                            <div id="capturedPreview" class="hidden absolute inset-0 bg-slate-900 flex items-center justify-center">
-                                <div class="text-center">
-                                    <div class="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                        </svg>
-                                    </div>
-                                    <p class="text-sm text-slate-300 font-medium">Image Captured</p>
-                                    <p class="text-xs text-slate-500 mt-1 mono" id="captureSize">0 bytes</p>
-                                </div>
+                        <!-- Active Video Stream -->
+                        <video id="videoStream" class="hidden absolute inset-0 w-full h-full object-cover" autoplay playsinline></video>
+                        
+                        <!-- Flash Overlay -->
+                        <div id="flashOverlay" class="hidden absolute inset-0 bg-white z-20 pointer-events-none"></div>
+                        
+                        <!-- Focus Brackets -->
+                        <div id="focusBrackets" class="hidden absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-48 h-48 border border-white/20 rounded-lg relative">
+                                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white/60"></div>
+                                <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-white/60"></div>
+                                <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-white/60"></div>
+                                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white/60"></div>
                             </div>
                         </div>
 
-                        <!-- Channel Badge -->
-                        <div class="absolute top-4 right-4 px-3 py-1 bg-slate-900/80 backdrop-blur rounded-lg border border-slate-700">
-                            <span class="text-xs font-mono text-slate-400">Channel: <span class="text-indigo-400 font-bold" id="channelDisplay">0</span></span>
+                        <!-- Recording Indicator -->
+                        <div id="recordingBadge" class="hidden absolute top-4 left-4 flex items-center gap-2 bg-red-500/20 backdrop-blur px-3 py-1.5 rounded-full border border-red-500/30">
+                            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                            <span class="text-xs font-mono text-red-400 font-bold">LIVE</span>
+                        </div>
+
+                        <!-- Resolution Badge -->
+                        <div id="resolutionBadge" class="hidden absolute top-4 right-4 bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-700">
+                            <span class="text-xs font-mono text-slate-400" id="resolutionText">-- x --</span>
                         </div>
                     </div>
 
-                    <!-- Control Bar -->
-                    <div class="p-4 flex items-center justify-between bg-slate-900/50 border-t border-slate-800">
+                    <!-- Controls -->
+                    <div class="p-4 bg-slate-900/50 border-t border-slate-800 flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <button onclick="toggleCamera()" id="powerBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition-all border border-slate-700 flex items-center gap-2">
+                            <button onclick="toggleCamera()" id="powerBtn" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all border border-slate-700 flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                 </svg>
-                                <span>Initialize</span>
+                                <span id="powerBtnText">Initialize</span>
                             </button>
-                            <button onclick="takePhoto()" id="shutterBtn" disabled class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-lg text-sm font-bold transition-all shadow-lg shadow-indigo-500/25 disabled:shadow-none flex items-center gap-2">
+                            
+                            <button onclick="capturePhoto()" id="captureBtn" disabled class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/25 disabled:shadow-none flex items-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <circle cx="12" cy="12" r="3" stroke-width="2"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
@@ -169,439 +155,455 @@
                                 CAPTURE
                             </button>
                         </div>
+
                         <div class="flex items-center gap-2">
-                            <span class="text-xs text-slate-500 mr-2">Channel:</span>
+                            <label class="text-xs text-slate-500">Channel:</label>
                             <input type="number" id="channelInput" value="0" min="0" max="99" 
-                                class="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm text-center text-slate-300 focus:outline-none focus:border-indigo-500 mono"
+                                class="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-center text-slate-300 focus:outline-none focus:border-indigo-500 mono"
                                 onchange="updateChannel(this.value)">
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Data Flow Visualization -->
-                <div class="glass-panel rounded-2xl p-6">
+            <!-- Session Info -->
+            <div class="lg:col-span-2 space-y-4">
+                <div class="glass-panel rounded-2xl p-5">
                     <h3 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
                         <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        Data Transmission Flow
+                        Session Status
                     </h3>
-                    <div class="relative">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex flex-col items-center gap-2 w-1/4">
-                                <div class="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700">
-                                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                                    </svg>
-                                </div>
-                                <span class="text-xs text-slate-500">Camera</span>
-                            </div>
-                            
-                            <div class="flex-1 px-4 relative h-12 flex items-center">
-                                <div class="w-full h-0.5 bg-slate-800 relative overflow-hidden">
-                                    <div id="dataFlowLine" class="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent -translate-x-full transition-transform"></div>
-                                </div>
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <span id="transferStatus" class="text-xs font-mono text-slate-600 bg-slate-900 px-2">Idle</span>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col items-center gap-2 w-1/4">
-                                <div class="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700">
-                                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
-                                    </svg>
-                                </div>
-                                <span class="text-xs text-slate-500">ClientListener</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sidebar: Logs & Status -->
-            <div class="space-y-6">
-                <!-- System Status Card -->
-                <div class="glass-panel rounded-2xl p-5">
-                    <h3 class="text-sm font-semibold text-slate-300 mb-4">System Status</h3>
+                    
                     <div class="space-y-3">
-                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-800">
+                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl border border-slate-800">
                             <div class="flex items-center gap-3">
-                                <div id="cameraStatusDot" class="w-2 h-2 rounded-full bg-slate-600"></div>
-                                <span class="text-sm text-slate-400">Camera API</span>
+                                <div id="camStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-600"></div>
+                                <span class="text-sm text-slate-400">Camera</span>
                             </div>
-                            <span id="cameraStatusText" class="text-xs font-mono text-slate-500">Closed</span>
+                            <span id="camStatusText" class="text-xs font-mono text-slate-500">Closed</span>
                         </div>
-                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-800">
+
+                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl border border-slate-800">
                             <div class="flex items-center gap-3">
-                                <div id="previewStatusDot" class="w-2 h-2 rounded-full bg-slate-600"></div>
-                                <span class="text-sm text-slate-400">Preview</span>
+                                <div id="streamStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-600"></div>
+                                <span class="text-sm text-slate-400">Stream</span>
                             </div>
-                            <span id="previewStatusText" class="text-xs font-mono text-slate-500">Inactive</span>
+                            <span id="streamStatusText" class="text-xs font-mono text-slate-500">Inactive</span>
                         </div>
-                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-800">
+
+                        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl border border-slate-800">
                             <div class="flex items-center gap-3">
-                                <div id="packageStatusDot" class="w-2 h-2 rounded-full bg-emerald-500 status-dot"></div>
-                                <span class="text-sm text-slate-400">Package</span>
+                                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                                <span class="text-sm text-slate-400">Storage</span>
                             </div>
-                            <span class="text-xs font-mono text-emerald-500">Available</span>
+                            <span class="text-xs font-mono text-emerald-500">Memory (Volatile)</span>
                         </div>
                     </div>
-                </div>
 
-                <!-- Live Log Console -->
-                <div class="glass-panel rounded-2xl p-5 flex flex-col h-[400px]">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    <div class="mt-4 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
-                            Logcat Output
-                        </h3>
-                        <button onclick="clearLogs()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">Clear</button>
-                    </div>
-                    <div id="logConsole" class="flex-1 bg-slate-950 rounded-lg p-3 overflow-y-auto font-mono text-xs space-y-1 border border-slate-800">
-                        <div class="text-slate-600 italic">// Waiting for camera operations...</div>
+                            <p class="text-xs text-amber-400/80 leading-relaxed">
+                                Photos are stored only in browser memory. They will be <strong>permanently lost</strong> when you reload or close this page.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Class Info -->
+                <!-- Stats -->
                 <div class="glass-panel rounded-2xl p-5">
-                    <h3 class="text-sm font-semibold text-slate-300 mb-3">Class Details</h3>
-                    <div class="space-y-2 text-xs mono">
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">Package</span>
-                            <span class="text-indigo-400">my.app.Library</span>
+                    <h3 class="text-sm font-semibold text-slate-300 mb-3">Session Stats</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3 bg-slate-800/50 rounded-xl border border-slate-800 text-center">
+                            <div class="text-2xl font-bold text-white" id="photoCount">0</div>
+                            <div class="text-xs text-slate-500 mt-1">Photos</div>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">Extends</span>
-                            <span class="text-slate-300">Object</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">API Level</span>
-                            <span class="text-amber-400">Legacy (Camera 1)</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">Callback</span>
-                            <span class="text-slate-300">PictureCallback</span>
+                        <div class="p-3 bg-slate-800/50 rounded-xl border border-slate-800 text-center">
+                            <div class="text-2xl font-bold text-indigo-400" id="totalSize">0</div>
+                            <div class="text-xs text-slate-500 mt-1">MB Used</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Source Code Explorer -->
+        <!-- Captured Photos Gallery -->
         <div class="glass-panel rounded-2xl p-6">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center justify-between mb-6">
                 <h3 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
-                    Source Code
+                    Captured Photos
+                    <span class="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 text-xs rounded-full" id="galleryBadge">0</span>
                 </h3>
-                <div class="flex gap-2">
-                    <button onclick="showCode('java')" class="px-3 py-1 text-xs rounded bg-indigo-600 text-white">Java</button>
-                    <button onclick="showCode('kotlin')" class="px-3 py-1 text-xs rounded bg-slate-800 text-slate-400 hover:text-white transition-colors">Kotlin</button>
-                </div>
+                <button onclick="downloadAll()" id="downloadAllBtn" disabled class="text-xs text-slate-500 hover:text-indigo-400 transition-colors flex items-center gap-2 disabled:opacity-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download All
+                </button>
             </div>
-            <div class="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
-                <div class="flex items-center px-4 py-2 bg-slate-900 border-b border-slate-800 gap-2">
-                    <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-                    <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
-                    <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
-                    <span class="ml-2 text-xs text-slate-500 mono">PhotoTaker.java</span>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="text-center py-16">
+                <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
                 </div>
-                <pre class="p-4 overflow-x-auto text-sm"><code class="language-java" id="codeBlock">public class PhotoTaker {
-    Camera cam;
-    ClientListener ctx;
-    int chan;
-    SurfaceHolder holder;
+                <p class="text-slate-500 text-sm">No photos captured yet</p>
+                <p class="text-slate-600 text-xs mt-1">Initialize camera and click capture</p>
+            </div>
 
-    private PictureCallback pic = new PictureCallback() {
-        public void onPictureTaken(byte[] data, Camera camera) {
-            ctx.handleData(chan, data);
-            Log.i("PhotoTaker", "After take picture !");
-            cam.release();
-            cam = null;
-        }
-    };
-
-    public boolean takePhoto() {
-        if(!(ctx.getApplicationContext().getPackageManager()
-            .hasSystemFeature(PackageManager.FEATURE_CAMERA)))
-            return false;
-            
-        try {
-            cam = Camera.open();
-        } catch (Exception e) { return false; }
-        
-        if (cam == null) return false;
-        
-        SurfaceView view = new SurfaceView(ctx);
-        try {
-            holder = view.getHolder();
-            cam.setPreviewDisplay(holder);
-        } catch(IOException e) { return false; }
-        
-        cam.startPreview();
-        cam.takePicture(null, null, pic);
-        return true;
-    }
-}</code></pre>
+            <!-- Photo Grid -->
+            <div id="photoGrid" class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <!-- Photos injected here -->
             </div>
         </div>
+
+        <!-- Hidden Canvas for Processing -->
+        <canvas id="processCanvas" class="hidden"></canvas>
 
     </main>
 
-    <script>
-        let isCameraOpen = false;
-        let currentChannel = 0;
-        let logId = 0;
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+            <div id="toastIcon"></div>
+            <span id="toastMessage" class="text-sm font-medium"></span>
+        </div>
+    </div>
 
-        function log(level, tag, message) {
-            const console = document.getElementById('logConsole');
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-            const colors = {
-                'I': 'text-emerald-400',
-                'D': 'text-blue-400',
-                'E': 'text-red-400',
-                'W': 'text-amber-400'
+    <script>
+        // Session-only storage (cleared on page reload)
+        const sessionPhotos = [];
+        let mediaStream = null;
+        let currentChannel = 0;
+        let photoIdCounter = 0;
+
+        const elements = {
+            video: document.getElementById('videoStream'),
+            canvas: document.getElementById('processCanvas'),
+            previewContainer: document.getElementById('previewContainer'),
+            placeholder: document.getElementById('placeholderState'),
+            flash: document.getElementById('flashOverlay'),
+            focus: document.getElementById('focusBrackets'),
+            recording: document.getElementById('recordingBadge'),
+            resolution: document.getElementById('resolutionBadge'),
+            resolutionText: document.getElementById('resolutionText'),
+            powerBtn: document.getElementById('powerBtn'),
+            powerBtnText: document.getElementById('powerBtnText'),
+            captureBtn: document.getElementById('captureBtn'),
+            photoGrid: document.getElementById('photoGrid'),
+            emptyState: document.getElementById('emptyState'),
+            photoCount: document.getElementById('photoCount'),
+            totalSize: document.getElementById('totalSize'),
+            galleryBadge: document.getElementById('galleryBadge'),
+            downloadAllBtn: document.getElementById('downloadAllBtn'),
+            camStatusDot: document.getElementById('camStatusDot'),
+            camStatusText: document.getElementById('camStatusText'),
+            streamStatusDot: document.getElementById('streamStatusDot'),
+            streamStatusText: document.getElementById('streamStatusText')
+        };
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            
+            const icons = {
+                success: `<div class="w-6 h-6 bg-emerald-500/20 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div>`,
+                error: `<div class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></div>`,
+                info: `<div class="w-6 h-6 bg-indigo-500/20 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>`
             };
             
-            const entry = document.createElement('div');
-            entry.className = `animate-slide-up flex gap-2 ${colors[level] || 'text-slate-400'}`;
-            entry.innerHTML = `
-                <span class="text-slate-600 shrink-0">[${time}]</span>
-                <span class="font-bold shrink-0">${level}/${tag}:</span>
-                <span class="text-slate-300">${message}</span>
-            `;
+            icon.innerHTML = icons[type];
+            msg.textContent = message;
             
-            console.appendChild(entry);
-            console.scrollTop = console.scrollHeight;
-            
-            // Keep only last 50 logs
-            while (console.children.length > 50) {
-                console.removeChild(console.firstChild);
-            }
-        }
-
-        function clearLogs() {
-            document.getElementById('logConsole').innerHTML = '<div class="text-slate-600 italic">// Logs cleared</div>';
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
         }
 
         function updateChannel(val) {
             currentChannel = parseInt(val) || 0;
-            document.getElementById('channelDisplay').textContent = currentChannel;
-            log('D', 'PhotoTaker', `Channel set to ${currentChannel}`);
+            showToast(`Channel set to ${currentChannel}`, 'info');
         }
 
-        function toggleCamera() {
-            const btn = document.getElementById('powerBtn');
-            const shutter = document.getElementById('shutterBtn');
-            const offState = document.getElementById('cameraOffState');
-            const activeState = document.getElementById('cameraActiveState');
-            
-            if (!isCameraOpen) {
-                // Initialize
-                log('I', 'PhotoTaker', 'Just before Open !');
-                
-                setTimeout(() => {
-                    isCameraOpen = true;
-                    offState.classList.add('hidden');
-                    activeState.classList.remove('hidden');
-                    
-                    btn.innerHTML = `
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                        <span>Release</span>
-                    `;
-                    btn.classList.add('bg-red-900/30', 'text-red-400', 'border-red-800');
-                    btn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
-                    
-                    shutter.disabled = false;
-                    
-                    document.getElementById('cameraStatusDot').className = 'w-2 h-2 rounded-full bg-emerald-500 status-dot';
-                    document.getElementById('cameraStatusText').textContent = 'Open';
-                    document.getElementById('cameraStatusText').className = 'text-xs font-mono text-emerald-500';
-                    
-                    document.getElementById('previewStatusDot').className = 'w-2 h-2 rounded-full bg-emerald-500 status-dot';
-                    document.getElementById('previewStatusText').textContent = 'Active';
-                    document.getElementById('previewStatusText').className = 'text-xs font-mono text-emerald-500';
-                    
-                    log('I', 'PhotoTaker', 'Right after Open !');
-                    log('D', 'PhotoTaker', 'Camera.startPreview() called');
-                }, 600);
+        async function toggleCamera() {
+            if (!mediaStream) {
+                await startCamera();
             } else {
-                // Release
-                releaseCamera();
+                stopCamera();
             }
         }
 
-        function releaseCamera() {
-            const btn = document.getElementById('powerBtn');
-            const shutter = document.getElementById('shutterBtn');
-            const offState = document.getElementById('cameraOffState');
-            const activeState = document.getElementById('cameraActiveState');
-            const captured = document.getElementById('capturedPreview');
-            
-            isCameraOpen = false;
-            offState.classList.remove('hidden');
-            activeState.classList.add('hidden');
-            captured.classList.add('hidden');
-            
-            btn.innerHTML = `
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                <span>Initialize</span>
-            `;
-            btn.classList.remove('bg-red-900/30', 'text-red-400', 'border-red-800');
-            btn.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
-            
-            shutter.disabled = true;
-            
-            document.getElementById('cameraStatusDot').className = 'w-2 h-2 rounded-full bg-slate-600';
-            document.getElementById('cameraStatusText').textContent = 'Closed';
-            document.getElementById('cameraStatusText').className = 'text-xs font-mono text-slate-500';
-            
-            document.getElementById('previewStatusDot').className = 'w-2 h-2 rounded-full bg-slate-600';
-            document.getElementById('previewStatusText').textContent = 'Inactive';
-            document.getElementById('previewStatusText').className = 'text-xs font-mono text-slate-500';
-            
-            log('I', 'PhotoTaker', 'Camera released');
+        async function startCamera() {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }, 
+                    audio: false 
+                });
+
+                elements.video.srcObject = mediaStream;
+                
+                elements.video.onloadedmetadata = () => {
+                    const track = mediaStream.getVideoTracks()[0];
+                    const settings = track.getSettings();
+                    elements.resolutionText.textContent = `${settings.width} x ${settings.height}`;
+                };
+
+                elements.placeholder.classList.add('hidden');
+                elements.video.classList.remove('hidden');
+                elements.focus.classList.remove('hidden');
+                elements.recording.classList.remove('hidden');
+                elements.resolution.classList.remove('hidden');
+                
+                elements.powerBtn.classList.add('bg-red-900/30', 'text-red-400', 'border-red-800');
+                elements.powerBtn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
+                elements.powerBtnText.textContent = 'Release';
+                
+                elements.captureBtn.disabled = false;
+                
+                elements.camStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]';
+                elements.camStatusText.textContent = 'Open';
+                elements.camStatusText.className = 'text-xs font-mono text-emerald-500';
+                
+                elements.streamStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]';
+                elements.streamStatusText.textContent = 'Active';
+                elements.streamStatusText.className = 'text-xs font-mono text-emerald-500';
+
+                showToast('Camera initialized', 'success');
+
+            } catch (err) {
+                console.error('Camera error:', err);
+                showToast(`Camera error: ${err.name}`, 'error');
+            }
         }
 
-        function takePhoto() {
-            if (!isCameraOpen) return;
+        function stopCamera() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+
+            elements.video.srcObject = null;
+            elements.video.classList.add('hidden');
+            elements.placeholder.classList.remove('hidden');
+            elements.focus.classList.add('hidden');
+            elements.recording.classList.add('hidden');
+            elements.resolution.classList.add('hidden');
+
+            elements.powerBtn.classList.remove('bg-red-900/30', 'text-red-400', 'border-red-800');
+            elements.powerBtn.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+            elements.powerBtnText.textContent = 'Initialize';
             
-            const shutter = document.getElementById('shutterBtn');
-            const flash = document.getElementById('flashOverlay');
-            const flowLine = document.getElementById('dataFlowLine');
-            const transferStatus = document.getElementById('transferStatus');
-            const captured = document.getElementById('capturedPreview');
+            elements.captureBtn.disabled = true;
+
+            elements.camStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-600';
+            elements.camStatusText.textContent = 'Closed';
+            elements.camStatusText.className = 'text-xs font-mono text-slate-500';
             
+            elements.streamStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-600';
+            elements.streamStatusText.textContent = 'Inactive';
+            elements.streamStatusText.className = 'text-xs font-mono text-slate-500';
+        }
+
+        function capturePhoto() {
+            if (!mediaStream) return;
+
             // Flash effect
-            flash.classList.remove('hidden');
-            flash.classList.add('animate-flash');
+            elements.flash.classList.remove('hidden');
+            elements.flash.classList.add('animate-flash');
             setTimeout(() => {
-                flash.classList.remove('animate-flash');
-                flash.classList.add('hidden');
-            }, 300);
+                elements.flash.classList.remove('animate-flash');
+                elements.flash.classList.add('hidden');
+            }, 150);
+
+            // Capture frame
+            const video = elements.video;
+            const canvas = elements.canvas;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
             
-            shutter.disabled = true;
-            log('I', 'PhotoTaker', 'takePicture() invoked');
-            
-            // Simulate capture delay
-            setTimeout(() => {
-                log('I', 'PhotoTaker', 'After take picture !');
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert to blob (simulating byte[] data)
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const size = blob.size;
+                const id = ++photoIdCounter;
+                const timestamp = new Date().toLocaleTimeString();
+
+                const photo = {
+                    id,
+                    url,
+                    blob,
+                    size,
+                    timestamp,
+                    channel: currentChannel,
+                    width: canvas.width,
+                    height: canvas.height
+                };
+
+                sessionPhotos.unshift(photo); // Add to beginning
+                renderPhoto(photo);
+                updateStats();
                 
-                // Show data transfer
-                transferStatus.textContent = 'Transmitting...';
-                transferStatus.className = 'text-xs font-mono text-indigo-400 bg-slate-900 px-2';
-                flowLine.style.transition = 'transform 1s linear';
-                flowLine.style.transform = 'translateX(300%)';
-                
-                setTimeout(() => {
-                    // Data sent
-                    transferStatus.textContent = 'Sent';
-                    transferStatus.className = 'text-xs font-mono text-emerald-500 bg-slate-900 px-2';
-                    
-                    const size = Math.floor(Math.random() * 2000000) + 500000;
-                    document.getElementById('captureSize').textContent = `${size.toLocaleString()} bytes`;
-                    
-                    log('D', 'ClientListener', `handleData(chan=${currentChannel}, data[${size}])`);
-                    
-                    // Show captured preview
-                    document.getElementById('cameraActiveState').classList.add('hidden');
-                    captured.classList.remove('hidden');
-                    
-                    // Reset flow line
-                    setTimeout(() => {
-                        flowLine.style.transition = 'none';
-                        flowLine.style.transform = 'translateX(-100%)';
-                        transferStatus.textContent = 'Idle';
-                        transferStatus.className = 'text-xs font-mono text-slate-600 bg-slate-900 px-2';
-                        
-                        // Auto release after capture (as per original code behavior)
-                        setTimeout(() => {
-                            log('I', 'PhotoTaker', 'Auto-releasing camera...');
-                            releaseCamera();
-                        }, 1500);
-                        
-                    }, 1000);
-                    
-                }, 800);
-                
-            }, 400);
+                showToast(`Captured ${(size/1024).toFixed(1)} KB on channel ${currentChannel}`, 'success');
+            }, 'image/jpeg', 0.92);
         }
 
-        function showCode(lang) {
-            const block = document.getElementById('codeBlock');
-            if (lang === 'kotlin') {
-                block.textContent = `class PhotoTaker(private val ctx: ClientListener, private var chan: Int) {
-    private var cam: Camera? = null
-    private var holder: SurfaceHolder? = null
+        function renderPhoto(photo) {
+            elements.emptyState.classList.add('hidden');
+            elements.photoGrid.classList.remove('hidden');
+            elements.downloadAllBtn.disabled = false;
 
-    private val pic = Camera.PictureCallback { data, camera ->
-        ctx.handleData(chan, data)
-        Log.i("PhotoTaker", "After take picture !")
-        cam?.release()
-        cam = null
-    }
+            const card = document.createElement('div');
+            card.className = 'photo-card animate-slide-up bg-slate-800 rounded-xl overflow-hidden border border-slate-700 group relative';
+            card.id = `photo-${photo.id}`;
+            
+            card.innerHTML = `
+                <div class="aspect-square relative overflow-hidden bg-slate-900">
+                    <img src="${photo.url}" class="w-full h-full object-cover" alt="Capture ${photo.id}">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="deletePhoto(${photo.id})" class="p-1.5 bg-red-500/80 hover:bg-red-500 text-white rounded-lg backdrop-blur">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="flex items-center justify-between text-xs text-white/90 font-mono">
+                            <span>${photo.width}x${photo.height}</span>
+                            <span>${(photo.size/1024).toFixed(0)}KB</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-3 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono text-indigo-400">#${photo.id}</span>
+                        <span class="text-xs text-slate-500">${photo.timestamp}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-1.5 py-0.5 bg-slate-700 rounded text-[10px] text-slate-400 font-mono">ch:${photo.channel}</span>
+                        <button onclick="downloadPhoto(${photo.id})" class="ml-auto text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Save
+                        </button>
+                    </div>
+                </div>
+            `;
 
-    fun takePhoto(): Boolean {
-        if (!ctx.applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)) 
-            return false
-        
-        cam = try { Camera.open() } catch (e: Exception) { return false }
-            ?: return false
+            elements.photoGrid.insertBefore(card, elements.photoGrid.firstChild);
+        }
 
-        val view = SurfaceView(ctx)
-        holder = view.holder
-        try {
-            cam?.setPreviewDisplay(holder)
-        } catch (e: IOException) { return false }
-
-        cam?.startPreview()
-        cam?.takePicture(null, null, pic)
-        return true
-    }
-}`;
-                block.className = 'language-kotlin';
-            } else {
-                block.textContent = document.querySelector('code').textContent;
-                block.className = 'language-java';
+        function deletePhoto(id) {
+            const index = sessionPhotos.findIndex(p => p.id === id);
+            if (index > -1) {
+                URL.revokeObjectURL(sessionPhotos[index].url);
+                sessionPhotos.splice(index, 1);
             }
-            hljs.highlightElement(block);
+            
+            const card = document.getElementById(`photo-${id}`);
+            if (card) {
+                card.style.transform = 'scale(0.9) opacity(0)';
+                setTimeout(() => card.remove(), 200);
+            }
+
+            if (sessionPhotos.length === 0) {
+                setTimeout(() => {
+                    elements.emptyState.classList.remove('hidden');
+                    elements.photoGrid.classList.add('hidden');
+                    elements.downloadAllBtn.disabled = true;
+                }, 250);
+            }
+            
+            updateStats();
+            showToast('Photo deleted', 'info');
         }
 
-        // Initialize syntax highlighting
-        hljs.highlightAll();
-        
-        // Initial log
-        setTimeout(() => {
-            log('I', 'System', 'PhotoTaker UI initialized');
-            log('D', 'PackageManager', 'FEATURE_CAMERA: true');
-        }, 500);
+        function clearAllPhotos() {
+            if (sessionPhotos.length === 0) return;
+            
+            sessionPhotos.forEach(p => URL.revokeObjectURL(p.url));
+            sessionPhotos.length = 0;
+            
+            elements.photoGrid.innerHTML = '';
+            elements.emptyState.classList.remove('hidden');
+            elements.photoGrid.classList.add('hidden');
+            elements.downloadAllBtn.disabled = true;
+            
+            updateStats();
+            showToast('All photos cleared from memory', 'info');
+        }
 
-        const ws = new WebSocket('ws://localhost:8080');
+        function downloadPhoto(id) {
+            const photo = sessionPhotos.find(p => p.id === id);
+            if (!photo) return;
 
-        ws.onopen = () => {
-            log('I', 'WebSocket', 'Connected to WebSocket server');
-        };
+            const a = document.createElement('a');
+            a.href = photo.url;
+            a.download = `capture_ch${photo.channel}_${photo.id}_${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            showToast(`Downloaded photo #${id}`, 'success');
+        }
 
-        ws.onmessage = (event) => {
-            log('D', 'WebSocket', `Received message: ${event.data}`);
-        };
+        function downloadAll() {
+            sessionPhotos.forEach((photo, index) => {
+                setTimeout(() => {
+                    const a = document.createElement('a');
+                    a.href = photo.url;
+                    a.download = `capture_ch${photo.channel}_${photo.id}_${Date.now()}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }, index * 200);
+            });
+            showToast(`Downloading ${sessionPhotos.length} photos...`, 'success');
+        }
 
-        ws.onclose = () => {
-            log('E', 'WebSocket', 'Disconnected from WebSocket server');
-        };
+        function updateStats() {
+            const count = sessionPhotos.length;
+            const totalBytes = sessionPhotos.reduce((sum, p) => sum + p.size, 0);
+            const totalMB = (totalBytes / (1024 * 1024)).toFixed(2);
+            
+            elements.photoCount.textContent = count;
+            elements.totalSize.textContent = totalMB;
+            elements.galleryBadge.textContent = count;
+        }
 
-        ws.onerror = (error) => {
-            log('E', 'WebSocket', `WebSocket error: ${error.message}`);
-        };
+        // Handle page unload - clean up object URLs
+        window.addEventListener('beforeunload', () => {
+            sessionPhotos.forEach(p => URL.revokeObjectURL(p.url));
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Check for camera support on load
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showToast('Camera API not supported in this browser', 'error');
+            elements.powerBtn.disabled = true;
+        }
     </script>
 </body>
 </html>
